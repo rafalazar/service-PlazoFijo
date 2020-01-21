@@ -74,6 +74,7 @@ public class PlazoFijoController {
 			return service.save(
 					new PlazoFijo(p.getName(),"1234567",p.getDni(),"Activo",340.50)
 					);
+			
 		});
 	}
 
