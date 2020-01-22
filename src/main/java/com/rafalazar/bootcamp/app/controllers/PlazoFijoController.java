@@ -3,8 +3,8 @@ package com.rafalazar.bootcamp.app.controllers;
 import java.net.URI;
 import java.util.Date;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rafalazar.bootcamp.app.document.PlazoFijo;
-import com.rafalazar.bootcamp.app.dto.PersonalDto;
 import com.rafalazar.bootcamp.app.service.PlazoFijoService;
 
 import reactor.core.publisher.Flux;
@@ -27,56 +26,80 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/plazoFijo")
 public class PlazoFijoController {
-	
-	private static final Logger log = LoggerFactory.getLogger(PlazoFijoController.class);
-	
+
+	//private static final Logger log = LoggerFactory.getLogger(PlazoFijoController.class);
+
 	@Autowired
 	private PlazoFijoService service;
-	
+
 	@GetMapping("/findAll")
-	Flux<PlazoFijo> findAll(){
+	Flux<PlazoFijo> findAll() {
 		return service.findAll();
 	}
-	
+
 	@GetMapping("/findById/{id}")
 	Mono<PlazoFijo> findById(@PathVariable("id") String id) {
 		return service.findById(id);
 	}
-	
+
 	@PostMapping("/create")
 	public Mono<ResponseEntity<PlazoFijo>> create(@RequestBody PlazoFijo pfijo) {
-		if(pfijo.getCreateAt() == null) {
+		if (pfijo.getCreateAt() == null) {
 			pfijo.setCreateAt(new Date());
 		}
-		
-		if(pfijo.getUpdateAt() == null) {
+
+		if (pfijo.getUpdateAt() == null) {
 			pfijo.setUpdateAt(new Date());
 		}
-		
-		return service.save(pfijo)
-				.map(p -> ResponseEntity.created(URI.create("/plazoFijo/".concat(p.getId())))
-						.contentType(MediaType.APPLICATION_JSON).body(p));
+
+		return service.save(pfijo).map(p -> ResponseEntity.created(URI.create("/plazoFijo/".concat(p.getId())))
+				.contentType(MediaType.APPLICATION_JSON).body(p));
 	}
-	
+
 	@DeleteMapping("/deleteById/{id}")
 	Mono<PlazoFijo> deleteById(@PathVariable String id) {
 		return service.delete(id);
 	}
-	
+
 	@PutMapping("/update/{id}")
 	Mono<PlazoFijo> update(@PathVariable String id, @RequestBody PlazoFijo pfijo) {
 		return service.update(pfijo);
 	}
 	
+	//Metodos propios de este microservicio.
+
+	// CreateById - forma 1
 	@GetMapping("/createById/{id}")
-	Mono<PlazoFijo> createById(@PathVariable("id") String id){
+	Mono<PlazoFijo> createById(@PathVariable("id") String id) {
 		return service.createById(id).flatMap(p -> {
-			return service.save(
-					new PlazoFijo(p.getName(),"1234567",p.getDni(),"Activo",340.50)
-					);
-			
+			return service.save(new PlazoFijo(p.getName(), "1234567", p.getDni(), "Activo", 340.50));
+
 		});
 	}
 
+	// CreateById formas 2
+	@PostMapping("createById2/{id}")
+	Mono<PlazoFijo> createById2(@PathVariable("id") String id, @RequestBody PlazoFijo pf){
+		if(pf.getCreateAt() == null) {
+			pf.setCreateAt(new Date());
+		}
+		
+		if(pf.getUpdateAt() == null) {
+			pf.setUpdateAt(new Date());
+		}
+		
+		return service.createById(id)
+				.flatMap(c -> {
+					return service.save(
+							new PlazoFijo(
+									c.getName(),
+									pf.getNumAccount(),
+									c.getDni(),
+									pf.getStatus(),
+									pf.getMonto()
+									)
+							);
+				});
+	}
 
 }
